@@ -176,8 +176,19 @@ class VanillaTableBert(TableBertModel):
             instance = self.input_formatter.get_input(context, table)
             instances.append(instance)
 
-        batch_size = len(contexts)
-        max_sequence_len = max(len(x['tokens']) for x in instances)
+        return VanillaTableBert.instances_to_tensor_dict(
+            instances=instances,
+            tables=tables,
+            config=self.config,
+            tokenizer=self.tokenizer,
+            table_specific_tensors=table_specific_tensors,
+            max_sequence_len=max(len(x['tokens']) for x in instances)
+        ), instances
+
+    @staticmethod
+    def instances_to_tensor_dict(instances, config, tokenizer, max_sequence_len=None, tables=None, table_specific_tensors=False):
+        batch_size = len(instances)
+        max_sequence_len = max_sequence_len or tokenizer.model_max_length or max(len(x['tokens']) for x in instances)
 
         # basic tensors
         input_array = np.zeros((batch_size, max_sequence_len), dtype=np.int)
@@ -200,13 +211,13 @@ class VanillaTableBert(TableBertModel):
             column_mask = np.zeros((batch_size, max_column_num), dtype=np.bool)
 
             column_span = 'whole_span'
-            if 'column_name' in self.config.column_representation:
+            if 'column_name' in config.column_representation:
                 column_span = 'column_name'
-            elif 'first_token' in self.config.column_representation:
+            elif 'first_token' in config.column_representation:
                 column_span = 'first_token'
 
         for i, instance in enumerate(instances):
-            token_ids = self.tokenizer.convert_tokens_to_ids(instance['tokens'])
+            token_ids = tokenizer.convert_tokens_to_ids(instance['tokens'])
 
             input_array[i, :len(token_ids)] = token_ids
             segment_array[i, instance['segment_a_length']: len(token_ids)] = 1
@@ -243,7 +254,7 @@ class VanillaTableBert(TableBertModel):
         # for instance in instances:
         #     print(instance)
 
-        return tensor_dict, instances
+        return tensor_dict
 
     def encode(
         self,

@@ -127,7 +127,7 @@ class Table(object):
             if isinstance(row, dict)
             else [tokenizer.tokenize(str(v)) for v in row]
 
-            for row in self.data
+            for _, row in (self.data.iterrows() if isinstance(self.data, pd.DataFrame) else enumerate(self.data))
         ]
 
         self.data = tokenized_rows

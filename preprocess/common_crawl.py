@@ -181,11 +181,10 @@ ALLOWED_SPECIAL_SYMBOLS = {'£', '°', '§', '€'}
 
 class ContextProcessor(object):
     def __init__(self):
-        nlp = English()  # just the language with no table_bert
-        sentencizer = nlp.create_pipe("sentencizer")
-        nlp.add_pipe(sentencizer)
+        nlp_model = spacy.load("en_core_web_sm")
+        nlp_model.add_pipe("sentencizer")
 
-        self.nlp = nlp
+        self.nlp = nlp_model
 
     def clean_context(self, text):
         text = RE_HTML_TAG.sub('', text)

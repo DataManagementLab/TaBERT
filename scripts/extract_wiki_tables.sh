@@ -7,16 +7,16 @@
 
 
 # path to the jdk
-JAVA_PATH=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Commands/
-CLASSPATH=contrib/wiki_extractor/tableBERT-1.0-SNAPSHOT-jar-with-dependencies.jar
+JAVA_PATH=$JAVA_HOME
+CLASSPATH=TaBERT/contrib/wiki_extractor/tableBERT-1.0-SNAPSHOT-jar-with-dependencies.jar
 
 # The following dump is a sample downloaded from
 # https://dumps.wikimedia.org/enwiki/20200901/enwiki-20200901-pages-articles-multistream1.xml-p1p30303.bz2
 # You may need to use the full Wikipedia dump for data extraction, for example,
 # https://dumps.wikimedia.org/enwiki/20201001/enwiki-20201001-pages-articles-multistream.xml.bz2 .
 # In our paper we used the dump `enwiki-20190520-pages-articles-multistream.xml.bz2`.
-wget -nc https://dumps.wikimedia.org/enwiki/20200901/enwiki-20200901-pages-articles-multistream1.xml-p1p30303.bz2 -P data/datasets/
-WIKI_DUMP=data/datasets/enwiki-20200901-pages-articles-multistream1.xml-p1p30303.bz2
+wget -nc http://ftp.acc.umu.se/mirror/wikimedia.org/dumps/enwiki/20210520/enwiki-20210520-pages-articles1.xml-p1p41242.bz2 -P data/datasets/
+WIKI_DUMP=data/datasets/enwiki-20210520-pages-articles1.xml-p1p41242.bz2
 
 OUTPUT_FILE=data/preprocessed_data/wiki_tables.jsonl
 

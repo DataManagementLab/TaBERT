@@ -83,7 +83,7 @@ class TableExtractor(multiprocessing.Process):
 
             job = self.job_queue.get()
 
-    def extract(self, uuid, page_id, title, page_content) -> Iterator[Dict]:
+    def extract(self, uuid, page_id, title, page_content, table_only=True) -> Iterator[Dict]:
         page_context = html.unescape(page_content)
         wiki_page = wtp.parse(page_context)
 
@@ -116,87 +116,90 @@ class TableExtractor(multiprocessing.Process):
             # if caption:
             #     caption = wiki2text(caption)
 
-            tab_span = table.span
-            context_end = tab_span[0]
-            context = wiki_page.string[: context_end]
+            if not table_only:
+                tab_span = table.span
+                context_end = tab_span[0]
+                context = wiki_page.string[: context_end]
 
-            cleaned_ctx = wiki2text(context)
+                cleaned_ctx = wiki2text(context)
 
-            for regex in tag_regex_list:
-                cleaned_ctx = regex.sub('', cleaned_ctx)
-            cleaned_ctx = html_tag_re.sub('', cleaned_ctx)
+                for regex in tag_regex_list:
+                    cleaned_ctx = regex.sub('', cleaned_ctx)
+                cleaned_ctx = html_tag_re.sub('', cleaned_ctx)
 
-            cleaned_ctx = [
-                x
-                for x in cleaned_ctx.strip().split('\n')
-                if x
-            ][-3:]
+                cleaned_ctx = [
+                    x
+                    for x in cleaned_ctx.strip().split('\n')
+                    if x
+                ][-3:]
 
-            if __DEBUG__:
-                print('*** Total Text ***')
-                for text in cleaned_ctx:
-                    print(text)
-
-            cleaned_text = []
-            if __DEBUG__:
-                print('*** Sentence Cleaning ***')
-            for text in cleaned_ctx:
                 if __DEBUG__:
-                    print('Text: ', text)
+                    print('*** Total Text ***')
+                    for text in cleaned_ctx:
+                        print(text)
 
-                text = text.strip('=')
-                text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf8').replace('()', '')
-                text = re.sub(r'\s+', ' ', text).strip()
-
-                text_tokens = text.replace(', ', ' , ').split(' ')
-                character_word_num = sum(1 for token in text_tokens if token.isalpha())
-                non_character_word_num = len(text_tokens) - character_word_num
-
-                if character_word_num < non_character_word_num:
+                cleaned_text = []
+                if __DEBUG__:
+                    print('*** Sentence Cleaning ***')
+                for text in cleaned_ctx:
                     if __DEBUG__:
-                        print('Removing Tokens', text_tokens)
+                        print('Text: ', text)
+
+                    text = text.strip('=')
+                    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf8').replace('()', '')
+                    text = re.sub(r'\s+', ' ', text).strip()
+
+                    text_tokens = text.replace(', ', ' , ').split(' ')
+                    character_word_num = sum(1 for token in text_tokens if token.isalpha())
+                    non_character_word_num = len(text_tokens) - character_word_num
+
+                    if character_word_num < non_character_word_num:
+                        if __DEBUG__:
+                            print('Removing Tokens', text_tokens)
+                        continue
+
+                    if text:
+                        cleaned_text.append(text)
+
+                        if __DEBUG__:
+                            print('Cleaned: ', text)
+
+                if __DEBUG__:
+                    print('**** Cleaned Text ****')
+                    print(cleaned_text)
+
+                if any('|' in x for x in cleaned_text) or any('{' in x for x in cleaned_text):
                     continue
 
-                if text:
-                    cleaned_text.append(text)
-
-                    if __DEBUG__:
-                        print('Cleaned: ', text)
-
-            if __DEBUG__:
-                print('**** Cleaned Text ****')
-                print(cleaned_text)
-
-            if any('|' in x for x in cleaned_text) or any('{' in x for x in cleaned_text):
-                continue
-
-            parsed_context = []
-            for paragraph in cleaned_text:
-                paragraph_sents = []
-                parsed_paragraph = self.nlp(paragraph)
-                # if log:
-                #     print('Paragraph: ', parsed_paragraph)
-                for sent in parsed_paragraph.sents:
-                    paragraph_sents.append(sent.text)
+                parsed_context = []
+                for paragraph in cleaned_text:
+                    paragraph_sents = []
+                    parsed_paragraph = self.nlp(paragraph)
                     # if log:
-                    #     print('Sent: ', sent)
-                parsed_context.append(paragraph_sents)
+                    #     print('Paragraph: ', parsed_paragraph)
+                    for sent in parsed_paragraph.sents:
+                        paragraph_sents.append(sent.text)
+                        # if log:
+                        #     print('Sent: ', sent)
+                    parsed_context.append(paragraph_sents)
 
             table_html = self.mediaWikiToHtml.convert(str(table))
             table = self.extract_table_from_html(table_html)
 
             # if there is not any context
-            if table and not parsed_context and not table.caption:
+            if not table_only and table and not parsed_context and not table.caption:
                 continue
 
             if table:
                 table = table.to_dict()
                 example = {
                     'uuid': f'wiki-{page_id}-{"_".join(title.split())}-{uuid}',
-                    'context_before': parsed_context,
                 }
 
                 example.update(table)
+
+                if not table_only:
+                    example['context_before'] = parsed_context
 
                 yield example
         # except:

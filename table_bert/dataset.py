@@ -276,7 +276,7 @@ class TableDataset(Dataset):
 
 
 class Example(object):
-    def __init__(self, uuid, header, context, column_data=None, **kwargs):
+    def __init__(self, uuid, header, context=None, column_data=None, **kwargs):
         self.uuid = uuid
         self.header = header
         self.context = context
@@ -315,7 +315,7 @@ class Example(object):
         return Example(**data)
 
     @classmethod
-    def from_dict(cls, entry: Dict, tokenizer: Optional[BertTokenizer], suffix) -> 'Example':
+    def from_dict(cls, entry: Dict, tokenizer: Optional[BertTokenizer], suffix, table_only=True) -> 'Example':
         def _get_data_source():
             return 'wiki' if 'wiki' in entry['uuid'] else 'common_crawl'
 
@@ -350,38 +350,39 @@ class Example(object):
 
                     column_data[col_id].append(cell_val)
 
-        context_before = []
-        context_after = []
+        if not table_only:
+            context_before = []
+            context_after = []
 
-        if source == 'wiki':
-            for para in entry['context_before']:
-                for sent in para:
+            if source == 'wiki':
+                for para in entry['context_before']:
+                    for sent in para:
+                        if tokenizer:
+                            sent = tokenizer.tokenize(sent)
+
+                        context_before.append(sent)
+
+                caption = entry['caption']
+                if caption:
+                    if tokenizer:
+                        caption = tokenizer.tokenize(entry['caption'])
+
+                    context_before.append(caption)
+            else:
+                for sent in entry['context_before']:
                     if tokenizer:
                         sent = tokenizer.tokenize(sent)
-
                     context_before.append(sent)
 
-            caption = entry['caption']
-            if caption:
-                if tokenizer:
-                    caption = tokenizer.tokenize(entry['caption'])
-
-                context_before.append(caption)
-        else:
-            for sent in entry['context_before']:
-                if tokenizer:
-                    sent = tokenizer.tokenize(sent)
-                context_before.append(sent)
-
-            for sent in entry['context_after']:
-                if tokenizer:
-                    sent = tokenizer.tokenize(sent)
-                context_after.append(sent)
+                for sent in entry['context_after']:
+                    if tokenizer:
+                        sent = tokenizer.tokenize(sent)
+                    context_after.append(sent)
 
         uuid = entry['uuid']
 
         return cls(uuid, header,
-                   [context_before, context_after],
+                   [context_before, context_after] if not table_only else None,
                    column_data=column_data,
                    source=source)
 

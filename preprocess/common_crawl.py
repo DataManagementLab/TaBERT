@@ -222,7 +222,7 @@ class ContextProcessor(object):
         return valid_sents
 
 
-def process_example(example_dict: Dict, context_processor: ContextProcessor, nlp_model: English) -> Optional[Dict]:
+def process_example(example_dict: Dict, context_processor: ContextProcessor, nlp_model: English, table_only=True) -> Optional[Dict]:
     if example_dict['tableType'] != 'RELATION' or example_dict['hasHeader'] is False:
         return None
 
@@ -287,10 +287,12 @@ def process_example(example_dict: Dict, context_processor: ContextProcessor, nlp
     uuid = '{}_{}_{}'.format(example_dict['s3Link'],
                              example_dict['recordOffset'], example_dict['recordEndOffset'])
 
-    return {'uuid': uuid,
-            'table': table.to_dict(),
-            'context_before': context_before,
-            'context_after': context_after}
+    result =  {'uuid': uuid,
+              'table': table.to_dict()}
+    if not table_only:
+        result.update({'context_before': context_before,
+                       'context_after': context_after})
+    return result
 
 
 class CommonCrawlTableExtractor(multiprocessing.Process):

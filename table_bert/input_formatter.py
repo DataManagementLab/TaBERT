@@ -74,11 +74,11 @@ class VanillaTableBertInputFormatter(TableBertBertInputFormatter):
         if self.config.context_first:
             table_tokens_start_idx = len(context) + 2  # account for [CLS] and [SEP]
             # account for [CLS] and [SEP], and the ending [SEP]
-            max_table_token_length = MAX_BERT_INPUT_LENGTH - len(context) - 2 - 1
+            max_table_token_length = self.config.max_sequence_len - len(context) - 2 - 1
         else:
             table_tokens_start_idx = 1  # account for starting [CLS]
             # account for [CLS] and [SEP], and the ending [SEP]
-            max_table_token_length = MAX_BERT_INPUT_LENGTH - len(context) - 2 - 1
+            max_table_token_length = self.config.max_sequence_len - len(context) - 2 - 1
 
         # generate table tokens
         row_input_tokens = []

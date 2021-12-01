@@ -270,12 +270,12 @@ class VerticalAttentionTableBert(VanillaTableBert):
         else:
             kwargs = {}
 
-        bert_output, _ = self.bert(
+        bert_output = self.bert(
             input_ids=flattened_input_ids,
             token_type_ids=flattened_segment_ids,
             attention_mask=flattened_sequence_mask,
             **kwargs
-        )
+        )[0]
 
         # torch.save(
         #     {

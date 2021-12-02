@@ -361,7 +361,7 @@ class VerticalAttentionTableBert(VanillaTableBert):
             loss = masked_context_token_loss + masked_column_token_loss
 
             masked_context_token_loss = masked_context_token_loss.item()
-            masked_context_token_ppl = math.exp(masked_context_token_loss / masked_context_token_num)
+            masked_context_token_ppl = math.exp(masked_context_token_loss / masked_context_token_num) if masked_context_token_num > 0 else 0
             masked_column_token_loss = masked_column_token_loss.item()
             masked_column_token_ppl = math.exp(masked_column_token_loss / masked_column_token_num)
 
@@ -388,6 +388,7 @@ class VerticalAttentionTableBert(VanillaTableBert):
                 logging_info['sample_size'] += masked_cell_token_num
 
             logging_info['ppl'] = math.exp(loss.item() / logging_info['sample_size'])
+            logging_info["prediction"] = cell_token_scores.argmax(-1)
 
             return loss, logging_info
         else:

@@ -178,7 +178,6 @@ class VanillaTableBert(TableBertModel):
 
         return VanillaTableBert.instances_to_tensor_dict(
             instances=instances,
-            tables=tables,
             config=self.config,
             tokenizer=self.tokenizer,
             table_specific_tensors=table_specific_tensors,
@@ -186,7 +185,7 @@ class VanillaTableBert(TableBertModel):
         ), instances
 
     @staticmethod
-    def instances_to_tensor_dict(instances, config, tokenizer, max_sequence_len=None, tables=None, table_specific_tensors=False):
+    def instances_to_tensor_dict(instances, config, tokenizer, max_sequence_len=None, table_specific_tensors=False):
         batch_size = len(instances)
         max_sequence_len = max_sequence_len or tokenizer.model_max_length or max(len(x['tokens']) for x in instances)
 
@@ -227,8 +226,7 @@ class VanillaTableBert(TableBertModel):
                 context_token_indices[i, :instance['context_length']] = list(range(*instance['context_span'])) #instance['context_token_indices']
                 context_mask[i, :instance['context_length']] = 1.
 
-                header = tables[i].header
-                for col_id, column in enumerate(header):
+                for col_id in range(len(instance['column_spans'])):
                     if col_id < len(instance['column_spans']):
                         col_start, col_end = instance['column_spans'][col_id][column_span]
 

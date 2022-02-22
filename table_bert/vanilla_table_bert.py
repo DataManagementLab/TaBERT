@@ -320,6 +320,6 @@ class VanillaTableBert(TableBertModel):
     def load_state_dict(self, state_dict: Dict[str, Any], strict: bool = True):
         if not any(key.startswith('_bert_model') for key in state_dict):
             logging.warning('warning: loading model from an old version')
-            self._bert_model.load_state_dict(state_dict, strict)
+            return self._bert_model.load_state_dict(state_dict, strict)
         else:
-            super(VanillaTableBert, self).load_state_dict(state_dict, strict)
+            return super(VanillaTableBert, self).load_state_dict(state_dict, strict)

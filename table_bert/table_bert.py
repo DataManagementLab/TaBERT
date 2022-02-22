@@ -234,7 +234,11 @@ class TableBertModel(nn.Module):
             for old_key, new_key in old_key_to_new_key_names:
                 state_dict[new_key] = state_dict[old_key]
 
-        model.load_state_dict(state_dict, strict=True)
+        load_result = model.load_state_dict(state_dict, strict=False)
+        if load_result.missing_keys:
+            print(f'warning: missing keys: {load_result.missing_keys}', file=sys.stderr)
+        if load_result.unexpected_keys:
+            print(f'warning: unexpected keys: {load_result.unexpected_keys}', file=sys.stderr)
 
         return model
 

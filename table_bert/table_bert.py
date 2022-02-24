@@ -159,6 +159,7 @@ class TableBertModel(nn.Module):
         config_file: Optional[Union[str, Path]] = None,
         config: Optional[TableBertConfig] = None,
         state_dict: Optional[Dict] = None,
+        strict: bool = False,
         **kwargs
     ) -> 'TableBertModel':
         # Avoid cyclic import.
@@ -234,10 +235,10 @@ class TableBertModel(nn.Module):
             for old_key, new_key in old_key_to_new_key_names:
                 state_dict[new_key] = state_dict[old_key]
 
-        load_result = model.load_state_dict(state_dict, strict=False)
-        if load_result.missing_keys:
+        load_result = model.load_state_dict(state_dict, strict=strict)
+        if not strict and load_result.missing_keys:
             print(f'warning: missing keys: {load_result.missing_keys}', file=sys.stderr)
-        if load_result.unexpected_keys:
+        if not strict and load_result.unexpected_keys:
             print(f'warning: unexpected keys: {load_result.unexpected_keys}', file=sys.stderr)
 
         return model

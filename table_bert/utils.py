@@ -30,7 +30,7 @@ try:
     TRANSFORMER_VERSION = TransformerVersion.PYTORCH_PRETRAINED_BERT
     logging.warning('You are using the old version of `pytorch_pretrained_bert`')
 except ImportError:
-    from transformers import BertTokenizer    # noqa
+    from transformers import BertTokenizerFast as BertTokenizer    # noqa
     from transformers.models.bert.modeling_bert import (    # noqa
         BertForMaskedLM, BertForPreTraining, BertModel,
         BertSelfOutput, BertIntermediate, BertOutput,
